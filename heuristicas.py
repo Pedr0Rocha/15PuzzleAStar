@@ -11,8 +11,40 @@ class Position:
 		self.row = row;
 		self.column = column;
 
+class Costs:
+	'''
+		g(n) = cost in the closest path from initial to an n state
+		h'(n) = heuristic cost
+		f(n) = g(n) + h(n)
+	'''
+
+	def __init__(self, g, h):
+		self.g = g;
+		self.h = h;
+		self.f = g + h;
+
+class Node:
+	'Represents a node for the AStar algorithm'
+
+	def __init__(self, board, costs, parent):
+		self.board = board;
+		self.costs = costs;
+		self.parent = parent;
+		self.serializedBoard = self.serializeBoard(board);
+		self.zeroPos;
+
+	def serializeBoard(self, board):
+		serializedBoard = '';
+		for i in range(len(board)):
+			for j in range(len(board)):
+				currentPiece = board[i][j];
+				if (currentPiece == 0):
+					self.zeroPos = Position(i, j);
+				serializedBoard += str(currentPiece) + '|';
+		return serializedBoard;
 
 correctAnswer = [1, 2, 3, 4, 12, 13, 14, 5, 11, 0, 15, 6, 10, 9, 8, 7];
+
 correctAnswerMap = {
 	1 : 0,  2 : 1,  3 : 2,  4 : 3,
 	12: 4,  13: 5,  14: 6,  5 : 7,
@@ -193,9 +225,11 @@ def heuristicTwo(board):
 	return len(incorrectPieces);
 
 # returns the sum of the manhattan distance of each incorrect piece;
-def heuristicThree(pieces, board):
+def heuristicThree(pieces):
 	sumDistance = 0;
 	for index, piece in enumerate(pieces):
+		if (piece == 0): 
+			continue;
 		positionOnBoard = arrayToBoardMap[index];
 		correctPosition = correctPositionMap[piece];
 
@@ -212,18 +246,76 @@ def heuristicFour(pieces, board, weights):
 	return wOne + wTwo + wThree;
 
 
+# returns max value between all the heuristics
+def heuristicFive(pieces, board, weights):
+	h1 = heuristicOne(pieces);
+	h2 = heuristicTwo(board);
+	h3 = heuristicThree(pieces, board);
+	h4 = heuristicFour(pieces, board, {'p1': 0.2, 'p2': 0.2, 'p3': 0.6});
 
-# Init pieces and boards
-pieces = loadFileToPieces();
-board = piecesToBoard(pieces);
+	return max(h1, h2, h3, h4);
+
+
+#################################
+#             UTILS             #
+#################################
+
+def getSortingAttribute(node):
+	return node.costs.f;
+
+def isCorrectAnswer(node):
+	return node.serializedBoard == correctNode.serializedBoard;
+
+
 correctBoard = piecesToBoard(correctAnswer);
+correctNode = Node(correctBoard, Costs(0, 0), parent = None);
 
-#printBoard(correctBoard);
-#print ("\n")
-#printBoard(board);
+heuristicFunc = heuristicThree;
 
-print ('h1 =', heuristicOne(pieces));
-print ('h2 =', heuristicTwo(board));
-print ('h3 =', heuristicThree(pieces, correctBoard));
-print ('h4 =', heuristicFour(pieces, board, {'p1': 0.2, 'p2': 0.2, 'p3': 0.6}));
+def initFirstNode():
+	pieces = loadFileToPieces();
+	board = piecesToBoard(pieces);
+	
+	costs = Costs(0, heuristicFunc(pieces));
+	firstNode = Node(board, costs, parent = None);
 
+	return firstNode;
+
+def generateSuccessors(node):
+	pass;
+
+def AStar():
+	openNodes = [];
+	openNodesMap = {};
+	closedNodes = [];
+	closedNodesMap = {};
+
+	firstNode = initFirstNode();
+	openNodes.append(firstNode);
+	openNodesMap[firstNode.serializedBoard] = firstNode.costs.g;
+
+	while (len(openNodes) != 0):
+
+		if (len(openNodes) == 0):
+			return -1; # shouldnt come to this
+
+		openNodes.sort(key = getSortingAttribute);
+		currentNode = openNodes[0];
+
+		openNodes.remove(currentNode);
+		del openNodesMap[currentNode.serializedBoard];
+
+		closedNodes.append(currentNode);
+		closedNodesMap[currentNode.serializedBoard] = currentNode.costs.g;
+
+		if (isCorrectAnswer(currentNode)):
+			return currentNode.costs.g;
+
+		successors = generateSuccessors(currentNode);
+
+
+
+
+print(AStar());
+	
+	
