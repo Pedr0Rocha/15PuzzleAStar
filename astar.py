@@ -2,7 +2,7 @@
 #[1,0(12) - 1,1(13) - 1,2(14) - 1,3(5)]
 #[2,0(11) - 2,1(0)  - 2,2(15) - 2,3(6)]
 #[3,0(10) - 3,1(9)  - 3,2(8)  - 3,3(7)]
-
+import copy;
 
 class Position:
 	'Contains attribute row and column of a piece on the board'
@@ -23,24 +23,33 @@ class Costs:
 		self.h = h;
 		self.f = g + h;
 
+	def setHCost(self, hCost):
+		self.h = hCost;
+		self.f = self.g + self.h;
+
 class Node:
 	'Represents a node for the AStar algorithm'
 
 	def __init__(self, board, costs, parent):
 		self.board = board;
-		self.costs = costs;
 		self.parent = parent;
 		self.serializedBoard = self.serializeBoard(board);
 		self.zeroPos;
+		self.costs = costs;
+		self.pieces;
 
 	def serializeBoard(self, board):
 		serializedBoard = '';
+		pieces = [];
 		for i in range(len(board)):
 			for j in range(len(board)):
 				currentPiece = board[i][j];
 				if (currentPiece == 0):
 					self.zeroPos = Position(i, j);
 				serializedBoard += str(currentPiece) + '|';
+				pieces.append(currentPiece);
+
+		self.pieces = pieces;
 		return serializedBoard;
 
 correctAnswer = [1, 2, 3, 4, 12, 13, 14, 5, 11, 0, 15, 6, 10, 9, 8, 7];
@@ -276,13 +285,68 @@ def initFirstNode():
 	pieces = loadFileToPieces();
 	board = piecesToBoard(pieces);
 	
-	costs = Costs(0, heuristicFunc(pieces));
-	firstNode = Node(board, costs, parent = None);
+	firstNode = Node(board, Costs(0, heuristicFunc(pieces)), parent = None);
 
 	return firstNode;
 
 def generateSuccessors(node):
-	pass;
+	successors = [];
+
+	zeroRow = node.zeroPos.row;
+	zeroColumn = node.zeroPos.column;
+
+	# down
+	if (node.zeroPos.row + 1 < 4):
+		board = copy.deepcopy(node.board);
+
+		board[zeroRow][zeroColumn] = board[zeroRow + 1][zeroColumn];
+		board[zeroRow + 1][zeroColumn] = 0;
+
+		nodeDown = Node(board, Costs(node.costs.g + 1, 0), node);
+		hCost = heuristicFunc(node.pieces);
+		nodeDown.costs.setHCost(hCost);
+
+		successors.append(nodeDown);
+
+	# up
+	if (node.zeroPos.row - 1 >= 0):
+		board = copy.deepcopy(node.board);
+
+		board[zeroRow][zeroColumn] = board[zeroRow - 1][zeroColumn];
+		board[zeroRow - 1][zeroColumn] = 0;
+
+		nodeUp = Node(board, Costs(node.costs.g + 1, 0), node);
+		hCost = heuristicFunc(node.pieces);
+		nodeUp.costs.setHCost(hCost);
+
+		successors.append(nodeUp);
+	# right
+	if (node.zeroPos.column - 1 >= 0):
+		board = copy.deepcopy(node.board);
+
+		board[zeroRow][zeroColumn] = board[zeroRow][zeroColumn - 1];
+		board[zeroRow][zeroColumn - 1] = 0;
+
+		nodeRight = Node(board, Costs(node.costs.g + 1, 0), node);
+		hCost = heuristicFunc(node.pieces);
+		nodeRight.costs.setHCost(hCost);
+
+		successors.append(nodeRight);
+	# left
+	if (node.zeroPos.column + 1 < 4):
+		board = copy.deepcopy(node.board);
+
+		board[zeroRow][zeroColumn] = board[zeroRow][zeroColumn + 1];
+		board[zeroRow][zeroColumn + 1] = 0;
+
+		nodeLeft = Node(board, Costs(node.costs.g + 1, 0), node);
+		hCost = heuristicFunc(node.pieces);
+		nodeLeft.costs.setHCost(hCost);
+
+		successors.append(nodeLeft);
+
+	return successors;
+
 
 def AStar():
 	openNodes = [];
@@ -313,7 +377,13 @@ def AStar():
 
 		successors = generateSuccessors(currentNode);
 
+		for successor in successors:
+			if (successor.serializedBoard in closedNodesMap):
+				continue;
 
+			if (successor.serializedBoard not in openNodesMap):
+				openNodes.append(successor);
+				openNodesMap[successor.serializedBoard] = successor;
 
 
 print(AStar());

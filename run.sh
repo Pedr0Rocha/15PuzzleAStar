@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..2}; do
+for i in {1..10}; do
 	echo Running test \#$i
-	cat testes3/$i.in | python3 heuristicas.py
+	time cat testes/$i.in | python3 astar.py
 done
