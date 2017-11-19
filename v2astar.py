@@ -3,6 +3,7 @@
 #[2,0(11) - 2,1(0)  - 2,2(15) - 2,3(6)]
 #[3,0(10) - 3,1(9)  - 3,2(8)  - 3,3(7)]
 import copy;
+from heapq import heappush, heappop;
 
 class Position:
 	'Contains attribute row and column of a piece on the board'
@@ -349,26 +350,22 @@ def generateSuccessors(node):
 
 
 def AStar():
-	openNodes = [];
+	openPriorityQueue = [];
 	openNodesMap = {};
 	closedNodes = [];
 	closedNodesMap = {};
 
+
 	firstNode = initFirstNode();
-	openNodes.append(firstNode);
-	openNodesMap[firstNode.serializedBoard] = firstNode.costs.g;
+	heappush(openPriorityQueue, (firstNode.costs.f, firstNode.serializedBoard));
+	openNodesMap[firstNode.serializedBoard] = firstNode;
 
-	while (len(openNodes) != 0):
+	while (len(openPriorityQueue) != 0):
 
-		if (len(openNodes) == 0):
+		if (len(openPriorityQueue) == 0):
 			return -1; # shouldnt come to this
 
-		#openNodes.sort(key = getSortingAttribute);
-		currentNode = min(openNodes, key=lambda n:n.costs.f);
-		# 1.22
-		#currentNode = openNodes[0];
-
-		openNodes.remove(currentNode);
+		currentNode = openNodesMap[heappop(openPriorityQueue)[1]];
 		del openNodesMap[currentNode.serializedBoard];
 
 		closedNodes.append(currentNode);
@@ -384,7 +381,7 @@ def AStar():
 				continue;
 
 			if (successor.serializedBoard not in openNodesMap):
-				openNodes.append(successor);
+				heappush(openPriorityQueue, (successor.costs.f, successor.serializedBoard));
 				openNodesMap[successor.serializedBoard] = successor;
 
 
